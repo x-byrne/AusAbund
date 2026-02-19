@@ -1,0 +1,30 @@
+{
+  "fetched_at": "2026-02-19T12:20:24Z",
+  "sources": {
+    "cpi": {
+      "dataflow": "ABS,CPI",
+      "key": "1.10001.10.50.Q",
+      "url": "https://data.api.abs.gov.au/rest/data/ABS,CPI/1.10001.10.50.Q"
+    },
+    "awe": {
+      "dataflow": "ABS,AWE",
+      "key": "3.1.3.7.TOT.20.AUS.S",
+      "url": "https://data.api.abs.gov.au/rest/data/ABS,AWE/3.1.3.7.TOT.20.AUS.S"
+    }
+  },
+  "notes": {
+    "cpi_measure": "1 = Index Numbers",
+    "cpi_index":   "10001 = All groups CPI",
+    "cpi_tsest":   "10 = Original (not seasonally adjusted)",
+    "cpi_region":  "50 = Weighted average of eight capital cities",
+    "cpi_freq":    "Q = Quarterly",
+    "awe_measure":       "3 = Full-time adult average weekly ordinary time earnings",
+    "awe_estimate_type": "1 = Earnings",
+    "awe_sex":           "3 = Persons",
+    "awe_sector":        "7 = Private and Public",
+    "awe_industry":      "TOT = All Industries",
+    "awe_tsest":         "20 = Seasonally Adjusted",
+    "awe_region":        "AUS = Australia",
+    "awe_freq":          "S = Half-yearly, semester"
+  }
+}
