@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Australian Abundance Index</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:       #C8963E;
+      --gold-light: #E8B865;
+      --gold-pale:  #F5E6C8;
+      --ink:        #1A1812;
+      --ink-mid:    #3D3826;
+      --ink-soft:   #6B6348;
+      --cream:      #FAF7F0;
+      --cream-dark: #F0EBE0;
+      --teal:       #2A6B6B;
+      --teal-light: #3D9E9E;
+      --red:        #B84040;
+      --rule:       rgba(200,150,62,0.2);
+      --card-bg:    #FFFFFF;
+      --shadow:     0 2px 16px rgba(26,24,18,0.07);
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--ink);
+      padding: 2.5rem 2rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 80px,
+        rgba(200,150,62,0.04) 80px,
+        rgba(200,150,62,0.04) 81px
+      );
+      pointer-events: none;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .header-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.6rem;
+    }
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 400;
+      color: var(--cream);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    header h1 em {
+      font-style: italic;
+      color: var(--gold-light);
+    }
+    .header-sub {
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+      color: rgba(250,247,240,0.5);
+      font-weight: 300;
+    }
+    .header-meta {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .data-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(200,150,62,0.12);
+      border: 1px solid rgba(200,150,62,0.25);
+      border-radius: 3px;
+      padding: 0.3rem 0.7rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--gold-light);
+    }
+    .data-badge .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 4rem;
+    }
+
+    /* ── Period range selector ── */
+    .period-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .period-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-right: 0.5rem;
+    }
+    .period-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      padding: 0.35rem 0.8rem;
+      border: 1px solid var(--rule);
+      background: transparent;
+      color: var(--ink-soft);
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s ease;
+    }
+    .period-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .period-btn.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--cream);
+    }
+
+    /* ── Stat Cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    @media (max-width: 900px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .cards { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--cream-dark);
+      border-radius: 4px;
+      padding: 1.4rem 1.5rem 1.2rem;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .card.visible { opacity: 1; transform: translateY(0); }
+    .card:nth-child(1) { transition-delay: 0.05s; }
+    .card:nth-child(2) { transition-delay: 0.12s; }
+    .card:nth-child(3) { transition-delay: 0.19s; }
+    .card:nth-child(4) { transition-delay: 0.26s; }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .card-abundance::after  { background: var(--teal); }
+    .card-timeprice::after  { background: var(--gold); }
+    .card-awe::after        { background: #5B7FA6; }
+    .card-cpi::after        { background: var(--red); }
+
+    .card-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 0.6rem;
+    }
+    .card-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.4rem;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 0.9rem;
+    }
+    .card-value.loading {
+      color: var(--cream-dark);
+      animation: shimmer 1.5s ease infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { opacity: 0.5; } 50% { opacity: 1; }
+    }
+    .card-changes {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .card-change-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+    }
+    .change-period {
+      color: var(--ink-soft);
+      font-weight: 300;
+    }
+    .change-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 500;
+    }
+    .up   { color: var(--teal); }
+    .down { color: var(--red); }
+    .neu  { color: var(--ink-soft); }
+
+    /* ── Section headers ── */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--ink);
+    }
+    .section-sub {
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      font-weight: 300;
+    }
+
+    /* ── Charts ── */
+    .chart-wrap {
+      background: var(--card-bg);
+      border: 1px solid var(--cream-dark);
+      border-radius: 4px;
+      padding: 1.75rem 1.75rem 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    .chart-canvas-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    /* ── Since tracking began banner ── */
+    .since-banner {
+      background: var(--ink);
+      border-radius: 4px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .since-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.3rem;
+    }
+    .since-text {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      color: rgba(250,247,240,0.7);
+    }
+    .since-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      color: var(--gold-light);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--rule);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--ink-soft);
+      font-weight: 300;
+    }
+    footer a { color: var(--gold); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Loading state ── */
+    #loading-overlay {
+      position: fixed; inset: 0;
+      background: var(--cream);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      transition: opacity 0.4s ease;
+    }
+    #loading-overlay.hidden { opacity: 0; pointer-events: none; }
+    .loader-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+    }
+
+    /* ── Error state ── */
+    #error-box {
+      display: none;
+      background: #FFF5F5;
+      border: 1px solid var(--red);
+      border-radius: 4px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 0.875rem;
+      color: var(--red);
+    }
+    #error-box.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <span class="loader-text">LOADING ABS DATA…</span>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="header-eyebrow">Australian Bureau of Statistics</div>
+    <h1>Australian <em>Abundance</em> Index</h1>
+    <p class="header-sub">How many hours of work does it take to buy a standard basket of goods and services?</p>
+    <div class="header-meta">
+      <span class="data-badge"><span class="dot"></span>CPI · Quarterly</span>
+      <span class="data-badge"><span class="dot"></span>AWE · Semi-annual</span>
+      <span class="data-badge" id="last-updated-badge">LOADING…</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <div id="error-box"></div>
+
+  <!-- Period selector -->
+  <div class="period-bar">
+    <span class="period-label">Period</span>
+    <button class="period-btn" data-periods="4">1Y</button>
+    <button class="period-btn" data-periods="20">5Y</button>
+    <button class="period-btn" data-periods="40">10Y</button>
+    <button class="period-btn active" data-periods="0">All</button>
+  </div>
+
+  <!-- 4 Stat Cards -->
+  <div class="cards">
+    <div class="card card-abundance" id="card-abundance">
+      <div class="card-label">Abundance Index</div>
+      <div class="card-value loading" id="val-abundance">—</div>
+      <div class="card-changes">
+        <div class="card-change-row">
+          <span class="change-period">Quarter-on-quarter</span>
+          <span class="change-val neu" id="chg-abundance-q">—</span>
+        </div>
+        <div class="card-change-row">
+          <span class="change-period">Year-on-year</span>
+          <span class="change-val neu" id="chg-abundance-y">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="card card-timeprice" id="card-timeprice">
+      <div class="card-label">Time Price</div>
+      <div class="card-value loading" id="val-timeprice">—</div>
+      <div class="card-changes">
+        <div class="card-change-row">
+          <span class="change-period">Quarter-on-quarter</span>
+          <span class="change-val neu" id="chg-timeprice-q">—</span>
+        </div>
+        <div class="card-change-row">
+          <span class="change-period">Year-on-year</span>
+          <span class="change-val neu" id="chg-timeprice-y">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="card card-awe" id="card-awe">
+      <div class="card-label">Avg Weekly Earnings</div>
+      <div class="card-value loading" id="val-awe">—</div>
+      <div class="card-changes">
+        <div class="card-change-row">
+          <span class="change-period">Semi-annual</span>
+          <span class="change-val neu" id="chg-awe-s">—</span>
+        </div>
+        <div class="card-change-row">
+          <span class="change-period">Year-on-year</span>
+          <span class="change-val neu" id="chg-awe-y">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="card card-cpi" id="card-cpi">
+      <div class="card-label">CPI (All Groups)</div>
+      <div class="card-value loading" id="val-cpi">—</div>
+      <div class="card-changes">
+        <div class="card-change-row">
+          <span class="change-period">Quarter-on-quarter</span>
+          <span class="change-val neu" id="chg-cpi-q">—</span>
+        </div>
+        <div class="card-change-row">
+          <span class="change-period">Year-on-year</span>
+          <span class="change-val neu" id="chg-cpi-y">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Since tracking began -->
+  <div class="since-banner">
+    <div>
+      <div class="since-label">Since tracking began</div>
+      <div class="since-text">Abundance for Australian workers has changed by</div>
+    </div>
+    <div class="since-number" id="since-total">—</div>
+  </div>
+
+  <!-- Column chart -->
+  <div class="chart-wrap">
+    <div class="section-header">
+      <span class="section-title">Abundance Growth</span>
+      <span class="section-sub">% change in Abundance, Time Price, AWE &amp; CPI over the selected period</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:280px">
+      <canvas id="chart-bar"></canvas>
+    </div>
+  </div>
+
+  <!-- Line chart 1: index levels -->
+  <div class="chart-wrap">
+    <div class="section-header">
+      <span class="section-title">Index Over Time</span>
+      <span class="section-sub">Abundance, Time Price, AWE index &amp; CPI index (rebased to 100 at first period)</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:300px">
+      <canvas id="chart-line-levels"></canvas>
+    </div>
+  </div>
+
+  <!-- Line chart 2: YoY rolling -->
+  <div class="chart-wrap">
+    <div class="section-header">
+      <span class="section-title">Year-on-Year Growth</span>
+      <span class="section-sub">Annual % change — when AWE grows faster than CPI, abundance rises</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:300px">
+      <canvas id="chart-line-yoy"></canvas>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Source: <a href="https://data.api.abs.gov.au/" target="_blank">ABS Data API</a> —
+  CPI (Cat. 6401.0) and Average Weekly Earnings (Cat. 6302.0).
+  Methodology based on Tupy &amp; Pooley (<em>Superabundance</em>, 2022).
+  Data snapshots via GitHub Actions.
+</footer>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const CPI_URL = 'data/cpi/cpi.csv';
+const AWE_URL = 'data/awe/awe.csv';
+
+// ── Palette ───────────────────────────────────────────────────────────────────
+const C = {
+  teal:      '#2A6B6B',
+  tealLight: '#3D9E9E',
+  gold:      '#C8963E',
+  goldLight: '#E8B865',
+  blue:      '#5B7FA6',
+  blueLight: '#7CA3C8',
+  red:       '#B84040',
+  redLight:  '#D46060',
+  grid:      'rgba(26,24,18,0.06)',
+  text:      '#6B6348',
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let allData = [];   // full merged quarterly series
+let charts  = {};
+let activePeriods = 0; // 0 = all
+
+// ── CSV parser ────────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    return Object.fromEntries(headers.map((h, i) => [h, vals[i]]));
+  });
+}
+
+// ── Period parsing ────────────────────────────────────────────────────────────
+// Returns a sortable numeric key: YYYYQQ (e.g. 2023.25 for 2023-Q1)
+function periodToNum(tp) {
+  if (!tp) return 0;
+  if (tp.includes('-Q')) {
+    const [y, q] = tp.split('-Q');
+    return parseInt(y) + (parseInt(q) - 1) * 0.25;
+  }
+  if (tp.includes('-S')) {
+    const [y, s] = tp.split('-S');
+    return parseInt(y) + (parseInt(s) === 1 ? 0.25 : 0.75);
+  }
+  return parseInt(tp);
+}
+
+function periodLabel(tp) {
+  if (!tp) return '';
+  if (tp.includes('-Q')) return tp.replace('-Q', ' Q');
+  if (tp.includes('-S')) return tp.replace('-S1', ' H1').replace('-S2', ' H2');
+  return tp;
+}
+
+// ── Linear interpolation of AWE to quarterly ─────────────────────────────────
+function interpolateAWE(aweMap, quarterKeys) {
+  // aweMap: { sortableNum: value }
+  // quarterKeys: sorted array of quarter sortable nums
+  const awePoints = Object.entries(aweMap).map(([k, v]) => [parseFloat(k), v]).sort((a,b)=>a[0]-b[0]);
+
+  return quarterKeys.map(qNum => {
+    // exact match
+    const exact = awePoints.find(p => Math.abs(p[0] - qNum) < 0.01);
+    if (exact) return exact[1];
+    // interpolate
+    const before = awePoints.filter(p => p[0] < qNum).at(-1);
+    const after  = awePoints.find(p => p[0] > qNum);
+    if (!before) return after ? after[1] : null;
+    if (!after)  return before[1];
+    const t = (qNum - before[0]) / (after[0] - before[0]);
+    return before[1] + t * (after[1] - before[1]);
+  });
+}
+
+// ── Compute pct change ────────────────────────────────────────────────────────
+function pctChange(arr, idx, lag) {
+  if (idx < lag || arr[idx - lag] == null || arr[idx] == null) return null;
+  return (arr[idx] / arr[idx - lag] - 1) * 100;
+}
+
+function fmtPct(v, decimals = 2) {
+  if (v == null || isNaN(v)) return '—';
+  const sign = v >= 0 ? '+' : '';
+  return `${sign}${v.toFixed(decimals)}%`;
+}
+
+function changeClass(v, invert = false) {
+  if (v == null) return 'neu';
+  if (invert) return v > 0 ? 'down' : 'up';
+  return v > 0 ? 'up' : 'down';
+}
+
+// ── Build merged quarterly series ─────────────────────────────────────────────
+function buildSeries(cpiRows, aweRows) {
+  // CPI: TIME_PERIOD, OBS_VALUE
+  const cpiMap = {};
+  cpiRows.forEach(r => {
+    const tp = r['TIME_PERIOD'];
+    const v  = parseFloat(r['OBS_VALUE']);
+    if (tp && !isNaN(v)) cpiMap[periodToNum(tp)] = { value: v, label: periodLabel(tp) };
+  });
+
+  // AWE: TIME_PERIOD, OBS_VALUE
+  const aweRaw = {};
+  aweRows.forEach(r => {
+    const tp = r['TIME_PERIOD'];
+    const v  = parseFloat(r['OBS_VALUE']);
+    if (tp && !isNaN(v)) aweRaw[periodToNum(tp)] = v;
+  });
+
+  // Quarterly keys from CPI, sorted
+  const qKeys = Object.keys(cpiMap).map(Number).sort((a,b) => a-b);
+
+  // Interpolate AWE onto quarterly grid
+  const aweInterp = interpolateAWE(aweRaw, qKeys);
+
+  // Find first period where both exist
+  let baseIdx = -1;
+  for (let i = 0; i < qKeys.length; i++) {
+    if (aweInterp[i] != null) { baseIdx = i; break; }
+  }
+  if (baseIdx < 0) throw new Error('No overlapping CPI/AWE data found.');
+
+  const cpiBase = cpiMap[qKeys[baseIdx]].value;
+  const aweBase = aweInterp[baseIdx];
+
+  return qKeys.map((k, i) => {
+    const cpiVal = cpiMap[k].value;
+    const aweVal = aweInterp[i];
+
+    const cpiIdx = (cpiVal / cpiBase) * 100;
+    const aweIdx = aweVal != null ? (aweVal / aweBase) * 100 : null;
+
+    const abundance  = (aweIdx != null) ? (aweIdx / cpiIdx) * 100 : null;
+    const timePrice  = (aweIdx != null) ? (cpiIdx / aweIdx) * 100 : null;
+
+    return {
+      key:       k,
+      label:     cpiMap[k].label,
+      cpiRaw:    cpiVal,
+      aweRaw:    aweVal,
+      cpiIdx,
+      aweIdx,
+      abundance,
+      timePrice,
+    };
+  }).filter(d => d.aweIdx != null); // only rows with AWE data
+}
+
+// ── Slice data by period count ─────────────────────────────────────────────────
+function sliceData(n) {
+  if (n === 0) return allData;
+  return allData.slice(-n);
+}
+
+// ── Update stat cards ─────────────────────────────────────────────────────────
+function updateCards(data) {
+  const n = data.length;
+  if (n < 2) return;
+
+  const last = data[n - 1];
+  const prev = data[n - 2];
+  const yoy  = n >= 5 ? data[n - 5] : null; // ~4 quarters back
+
+  // Helper: set card
+  function setCard(valId, chgQId, chgYId, currentVal, qChg, yChg, invertDir = false) {
+    const valEl  = document.getElementById(valId);
+    const chgQEl = document.getElementById(chgQId);
+    const chgYEl = document.getElementById(chgYId);
+
+    valEl.textContent = currentVal.toFixed(1);
+    valEl.classList.remove('loading');
+
+    chgQEl.textContent  = fmtPct(qChg);
+    chgQEl.className    = `change-val ${changeClass(qChg, invertDir)}`;
+
+    chgYEl.textContent  = fmtPct(yChg);
+    chgYEl.className    = `change-val ${changeClass(yChg, invertDir)}`;
+  }
+
+  // Abundance (higher = better)
+  const abundQ = prev.abundance != null ? (last.abundance / prev.abundance - 1) * 100 : null;
+  const abundY = yoy  && yoy.abundance  != null ? (last.abundance / yoy.abundance  - 1) * 100 : null;
+  setCard('val-abundance', 'chg-abundance-q', 'chg-abundance-y', last.abundance, abundQ, abundY, false);
+
+  // Time Price (lower = better → invert)
+  const tpQ = prev.timePrice != null ? (last.timePrice / prev.timePrice - 1) * 100 : null;
+  const tpY = yoy && yoy.timePrice != null ? (last.timePrice / yoy.timePrice - 1) * 100 : null;
+  setCard('val-timeprice', 'chg-timeprice-q', 'chg-timeprice-y', last.timePrice, tpQ, tpY, true);
+
+  // AWE (higher = better)
+  const aweQ = prev.aweRaw != null ? (last.aweRaw / prev.aweRaw - 1) * 100 : null;
+  const aweY = yoy && yoy.aweRaw != null ? (last.aweRaw / yoy.aweRaw - 1) * 100 : null;
+  const aweEl = document.getElementById('val-awe');
+  aweEl.textContent = `$${Math.round(last.aweRaw).toLocaleString()}`;
+  aweEl.classList.remove('loading');
+  const chgAS = document.getElementById('chg-awe-s');
+  const chgAY = document.getElementById('chg-awe-y');
+  chgAS.textContent = fmtPct(aweQ); chgAS.className = `change-val ${changeClass(aweQ)}`;
+  chgAY.textContent = fmtPct(aweY); chgAY.className = `change-val ${changeClass(aweY)}`;
+
+  // CPI (higher = worse → invert)
+  const cpiQ = (last.cpiRaw / prev.cpiRaw - 1) * 100;
+  const cpiY = yoy ? (last.cpiRaw / yoy.cpiRaw - 1) * 100 : null;
+  setCard('val-cpi', 'chg-cpi-q', 'chg-cpi-y', last.cpiRaw, cpiQ, cpiY, true);
+
+  // Since tracking began
+  const first = allData[0];
+  const totalAbund = first.abundance != null ? (allData[allData.length-1].abundance / first.abundance - 1) * 100 : null;
+  const sinceEl = document.getElementById('since-total');
+  sinceEl.textContent = fmtPct(totalAbund, 1);
+  sinceEl.style.color = totalAbund >= 0 ? 'var(--gold-light)' : 'var(--red)';
+
+  // Animate cards in
+  document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
+}
+
+// ── Update last updated badge ─────────────────────────────────────────────────
+function updateBadge(data) {
+  const last = data[data.length - 1];
+  document.getElementById('last-updated-badge').textContent = `LATEST: ${last.label}`;
+}
+
+// ── Bar chart ─────────────────────────────────────────────────────────────────
+function buildBarChart(data) {
+  const n = data.length;
+  if (n < 2) return;
+  const first = data[0];
+  const last  = data[n - 1];
+
+  function totalPct(startVal, endVal) {
+    return startVal != null && endVal != null ? (endVal / startVal - 1) * 100 : 0;
+  }
+
+  const values = [
+    totalPct(first.abundance, last.abundance),
+    totalPct(first.timePrice, last.timePrice),
+    totalPct(first.aweIdx,    last.aweIdx),
+    totalPct(first.cpiIdx,    last.cpiIdx),
+  ];
+  const labels = ['Abundance', 'Time Price', 'AWE Index', 'CPI Index'];
+  const colors = [C.teal, C.gold, C.blue, C.red];
+  const colorsBg = ['rgba(42,107,107,0.15)', 'rgba(200,150,62,0.15)', 'rgba(91,127,166,0.15)', 'rgba(184,64,64,0.15)'];
+
+  const ctx = document.getElementById('chart-bar').getContext('2d');
+  if (charts.bar) charts.bar.destroy();
+  charts.bar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: values.map((v,i) => v >= 0 ? colors[i] : colorsBg[i]),
+        borderColor: colors,
+        borderWidth: 1.5,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${fmtPct(ctx.parsed.y, 1)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'DM Sans', size: 12 }, color: C.text }
+        },
+        y: {
+          grid: { color: C.grid },
+          ticks: {
+            font: { family: 'DM Mono', size: 11 },
+            color: C.text,
+            callback: v => `${v > 0 ? '+' : ''}${v.toFixed(0)}%`
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Line chart: index levels ───────────────────────────────────────────────────
+function buildLevelsChart(data) {
+  const labels     = data.map(d => d.label);
+  const abundance  = data.map(d => d.abundance);
+  const timePrice  = data.map(d => d.timePrice);
+  const aweIdx     = data.map(d => d.aweIdx);
+  const cpiIdx     = data.map(d => d.cpiIdx);
+
+  const ctx = document.getElementById('chart-line-levels').getContext('2d');
+  if (charts.levels) charts.levels.destroy();
+  charts.levels = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Abundance',
+          data: abundance,
+          borderColor: C.teal,
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+        },
+        {
+          label: 'AWE Index',
+          data: aweIdx,
+          borderColor: C.blue,
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [5, 3],
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+        },
+        {
+          label: 'CPI Index',
+          data: cpiIdx,
+          borderColor: C.red,
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [5, 3],
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+        },
+        {
+          label: 'Time Price',
+          data: timePrice,
+          borderColor: C.gold,
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [2, 4],
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: {
+            font: { family: 'DM Sans', size: 11 },
+            color: C.text,
+            boxWidth: 20,
+            boxHeight: 2,
+            padding: 16,
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { family: 'DM Mono', size: 10 },
+            color: C.text,
+            maxTicksLimit: 12,
+            maxRotation: 0,
+          }
+        },
+        y: {
+          grid: { color: C.grid },
+          ticks: {
+            font: { family: 'DM Mono', size: 11 },
+            color: C.text,
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Line chart: YoY % change ──────────────────────────────────────────────────
+function buildYoyChart(data) {
+  // Compute YoY for each point (lag 4 quarters)
+  const lag = 4;
+  const labels = data.slice(lag).map(d => d.label);
+
+  function yoyArr(arr) {
+    return arr.slice(lag).map((v, i) => {
+      const prev = arr[i];
+      return (v != null && prev != null) ? (v / prev - 1) * 100 : null;
+    });
+  }
+
+  const abundYoy = yoyArr(data.map(d => d.abundance));
+  const aweYoy   = yoyArr(data.map(d => d.aweIdx));
+  const cpiYoy   = yoyArr(data.map(d => d.cpiIdx));
+
+  const ctx = document.getElementById('chart-line-yoy').getContext('2d');
+  if (charts.yoy) charts.yoy.destroy();
+  charts.yoy = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Abundance YoY',
+          data: abundYoy,
+          borderColor: C.teal,
+          backgroundColor: 'rgba(42,107,107,0.06)',
+          fill: true,
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+        },
+        {
+          label: 'AWE YoY',
+          data: aweYoy,
+          borderColor: C.blue,
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [5, 3],
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+        },
+        {
+          label: 'CPI YoY',
+          data: cpiYoy,
+          borderColor: C.red,
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [5, 3],
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: {
+            font: { family: 'DM Sans', size: 11 },
+            color: C.text,
+            boxWidth: 20,
+            boxHeight: 2,
+            padding: 16,
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${fmtPct(ctx.parsed.y, 2)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { family: 'DM Mono', size: 10 },
+            color: C.text,
+            maxTicksLimit: 12,
+            maxRotation: 0,
+          }
+        },
+        y: {
+          grid: { color: C.grid },
+          ticks: {
+            font: { family: 'DM Mono', size: 11 },
+            color: C.text,
+            callback: v => `${v > 0 ? '+' : ''}${v?.toFixed(1)}%`
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Render all with current period ────────────────────────────────────────────
+function render(n) {
+  const data = sliceData(n);
+  updateCards(data);
+  buildBarChart(data);
+  buildLevelsChart(data);
+  buildYoyChart(data);
+}
+
+// ── Period button handlers ────────────────────────────────────────────────────
+document.querySelectorAll('.period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activePeriods = parseInt(btn.dataset.periods);
+    render(activePeriods);
+  });
+});
+
+// ── Main: fetch and boot ───────────────────────────────────────────────────────
+async function init() {
+  const overlay = document.getElementById('loading-overlay');
+  const errBox  = document.getElementById('error-box');
+
+  try {
+    const [cpiText, aweText] = await Promise.all([
+      fetch(CPI_URL).then(r => {
+        if (!r.ok) throw new Error(`Failed to fetch CPI data (${r.status}). Have you run the GitHub Actions workflow to download the data files?`);
+        return r.text();
+      }),
+      fetch(AWE_URL).then(r => {
+        if (!r.ok) throw new Error(`Failed to fetch AWE data (${r.status}). Have you run the GitHub Actions workflow to download the data files?`);
+        return r.text();
+      }),
+    ]);
+
+    const cpiRows = parseCSV(cpiText);
+    const aweRows = parseCSV(aweText);
+
+    allData = buildSeries(cpiRows, aweRows);
+
+    if (allData.length === 0) throw new Error('No data points could be computed. Check that the CSV dimension keys match the expected format.');
+
+    updateBadge(allData);
+    render(activePeriods);
+
+    overlay.classList.add('hidden');
+
+  } catch (err) {
+    overlay.classList.add('hidden');
+    errBox.textContent = `⚠ ${err.message}`;
+    errBox.classList.add('visible');
+    console.error(err);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
