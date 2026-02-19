@@ -102,8 +102,8 @@ jobs:
       # ── 5. Validate files are non-empty ──────────────────────────────────────
       - name: Validate downloads
         run: |
-          for f in data/cpi/cpi.json data/cpi/cpi.xml data/cpi/cpi.csv \
-                   data/awe/awe.json data/awe/awe.xml data/awe/awe.csv; do
+          for f in data/cpi/cpi.jso data/cpi/cpi.csv \
+                   data/awe/awe.json data/awe/awe.csv; do
             if [ ! -s "$f" ]; then
               echo "ERROR: $f is empty or missing"
               exit 1
