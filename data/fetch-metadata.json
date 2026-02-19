@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-02-19T12:39:36Z",
+  "fetched_at": "2026-02-19T13:13:02Z",
   "sources": {
     "cpi": {
       "dataflow": "ABS,CPI",
@@ -8,23 +8,45 @@
     },
     "awe": {
       "dataflow": "ABS,AWE",
-      "key": "3.1.3.7.TOT.10.AUS.S",
-      "url": "https://data.api.abs.gov.au/rest/data/ABS,AWE/3.1.3.7.TOT.10.AUS.S"
+      "key": "3.1.3.7.TOT.20.AUS.S",
+      "url": "https://data.api.abs.gov.au/rest/data/ABS,AWE/3.1.3.7.TOT.20.AUS.S"
+    },
+    "lci": {
+      "dataflow": "ABS,LCI",
+      "key": "1.10001.P1.50.Q",
+      "url": "https://data.api.abs.gov.au/rest/data/ABS,LCI/1.10001.P1.50.Q"
+    },
+    "wpi": {
+      "dataflow": "ABS,WPI",
+      "key": "1.THRPEB.7.TOT.20.AUS.Q",
+      "url": "https://data.api.abs.gov.au/rest/data/ABS,WPI/1.THRPEB.7.TOT.20.AUS.Q"
     }
   },
   "notes": {
-    "cpi_measure": "1 = Index Numbers",
-    "cpi_index":   "10001 = All groups CPI",
-    "cpi_tsest":   "10 = Original (not seasonally adjusted)",
-    "cpi_region":  "50 = Weighted average of eight capital cities",
-    "cpi_freq":    "Q = Quarterly",
+    "cpi_measure":       "1 = Index Numbers",
+    "cpi_index":         "10001 = All groups CPI",
+    "cpi_tsest":         "10 = Original (not seasonally adjusted)",
+    "cpi_region":        "50 = Weighted average of eight capital cities",
+    "cpi_freq":          "Q = Quarterly",
     "awe_measure":       "3 = Full-time adult average weekly ordinary time earnings",
     "awe_estimate_type": "1 = Earnings",
     "awe_sex":           "3 = Persons",
     "awe_sector":        "7 = Private and Public",
     "awe_industry":      "TOT = All Industries",
-    "awe_tsest":         "10 = Original",
+    "awe_tsest":         "20 = Original (not seasonally adjusted)",
     "awe_region":        "AUS = Australia",
-    "awe_freq":          "S = Half-yearly, semester"
+    "awe_freq":          "S = Half-yearly, semester",
+    "lci_measure":       "1 = Index Number",
+    "lci_index":         "10001 = All groups",
+    "lci_household":     "P1 = Employee households",
+    "lci_region":        "50 = Weighted average of eight capital cities",
+    "lci_freq":          "Q = Quarterly",
+    "wpi_measure":       "1 = Quarterly Index",
+    "wpi_index":         "THRPEB = Total hourly rates of pay excluding bonuses",
+    "wpi_sector":        "7 = Private and Public",
+    "wpi_industry":      "TOT = All Industries",
+    "wpi_tsest":         "20 = Seasonally Adjusted",
+    "wpi_region":        "AUS = Australia",
+    "wpi_freq":          "Q = Quarterly"
   }
 }
