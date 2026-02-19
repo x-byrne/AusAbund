@@ -63,18 +63,6 @@ jobs:
             -o data/cpi/cpi.json
           echo "CPI JSON: $(wc -c < data/cpi/cpi.json) bytes"
 
-      # ── 3b. Fetch CPI — XML (SDMX-ML 2.1) ───────────────────────────────────
-      - name: Fetch CPI (XML)
-        run: |
-          curl --silent --show-error --fail \
-            --retry 3 --retry-delay 5 \
-            --max-time 60 \
-            -H "User-Agent: $USER_AGENT" \
-            -H "Accept: application/vnd.sdmx.data+xml;version=2.1" \
-            "$ABS_API/$CPI_DATAFLOW/$CPI_KEY?detail=full" \
-            -o data/cpi/cpi.xml
-          echo "CPI XML: $(wc -c < data/cpi/cpi.xml) bytes"
-
       # ── 3c. Fetch CPI — CSV (SDMX-CSV, easiest for JS consumption) ──────────
       - name: Fetch CPI (CSV)
         run: |
@@ -98,18 +86,6 @@ jobs:
             "$ABS_API/$AWE_DATAFLOW/$AWE_KEY?detail=full" \
             -o data/awe/awe.json
           echo "AWE JSON: $(wc -c < data/awe/awe.json) bytes"
-
-      # ── 4b. Fetch AWE — XML ──────────────────────────────────────────────────
-      - name: Fetch AWE (XML)
-        run: |
-          curl --silent --show-error --fail \
-            --retry 3 --retry-delay 5 \
-            --max-time 60 \
-            -H "User-Agent: $USER_AGENT" \
-            -H "Accept: application/vnd.sdmx.data+xml;version=2.1" \
-            "$ABS_API/$AWE_DATAFLOW/$AWE_KEY?detail=full" \
-            -o data/awe/awe.xml
-          echo "AWE XML: $(wc -c < data/awe/awe.xml) bytes"
 
       # ── 4c. Fetch AWE — CSV ──────────────────────────────────────────────────
       - name: Fetch AWE (CSV)
