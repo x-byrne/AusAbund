@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       start_period:
-        description: "Start period (e.g. 2000-Q1 for CPI, 2000 for AWE)"
+        description: "Start period for CPI (e.g. 2000-Q1). AWE start year is derived automatically."
         required: false
         default: ""
 
@@ -56,59 +56,74 @@ jobs:
         run: |
           mkdir -p data/cpi data/awe
 
-      # ── 3a. Fetch CPI — JSON ─────────────────────────────────────────────────
+      # ── 3. Resolve start periods into env vars for all subsequent steps ───────
+      # CPI accepts "2000-Q1" format; AWE accepts year-only ("2000").
+      # If a manual start_period was provided (e.g. "2003-Q2"), derive the AWE
+      # start year from it using cut. Otherwise fall back to the defaults above.
+      - name: Resolve start periods
+        run: |
+          INPUT="${{ github.event.inputs.start_period }}"
+          if [ -n "$INPUT" ]; then
+            CPI_START_RESOLVED="$INPUT"
+            AWE_START_RESOLVED="$(echo "$INPUT" | cut -d'-' -f1)"
+          else
+            CPI_START_RESOLVED="$CPI_START"
+            AWE_START_RESOLVED="$AWE_START"
+          fi
+          echo "CPI_START_RESOLVED=$CPI_START_RESOLVED" >> "$GITHUB_ENV"
+          echo "AWE_START_RESOLVED=$AWE_START_RESOLVED" >> "$GITHUB_ENV"
+          echo "CPI start : $CPI_START_RESOLVED"
+          echo "AWE start : $AWE_START_RESOLVED"
+
+      # ── 4a. Fetch CPI — JSON ─────────────────────────────────────────────────
       - name: Fetch CPI (JSON)
         run: |
-          START="${{ github.event.inputs.start_period || env.CPI_START }}"
           curl --silent --show-error --fail \
             --retry 3 --retry-delay 5 \
             --max-time 60 \
             -H "User-Agent: $USER_AGENT" \
             -H "Accept: application/vnd.sdmx.data+json;version=1.0" \
-            "$ABS_API/$CPI_DATAFLOW/$CPI_KEY?startPeriod=${START}&detail=full" \
+            "$ABS_API/$CPI_DATAFLOW/$CPI_KEY?startPeriod=$CPI_START_RESOLVED&detail=full" \
             -o data/cpi/cpi.json
           echo "CPI JSON: $(wc -c < data/cpi/cpi.json) bytes"
 
-      # ── 3b. Fetch CPI — XML (SDMX-ML 2.1) ───────────────────────────────────
+      # ── 4b. Fetch CPI — XML (SDMX-ML 2.1) ───────────────────────────────────
       - name: Fetch CPI (XML)
         run: |
-          START="${{ github.event.inputs.start_period || env.CPI_START }}"
           curl --silent --show-error --fail \
             --retry 3 --retry-delay 5 \
             --max-time 60 \
             -H "User-Agent: $USER_AGENT" \
             -H "Accept: application/vnd.sdmx.data+xml;version=2.1" \
-            "$ABS_API/$CPI_DATAFLOW/$CPI_KEY?startPeriod=${START}&detail=full" \
+            "$ABS_API/$CPI_DATAFLOW/$CPI_KEY?startPeriod=$CPI_START_RESOLVED&detail=full" \
             -o data/cpi/cpi.xml
           echo "CPI XML: $(wc -c < data/cpi/cpi.xml) bytes"
 
-      # ── 3c. Fetch CPI — CSV (SDMX-CSV, easiest for JS consumption) ──────────
+      # ── 4c. Fetch CPI — CSV (SDMX-CSV, easiest for JS consumption) ──────────
       - name: Fetch CPI (CSV)
         run: |
-          START="${{ github.event.inputs.start_period || env.CPI_START }}"
           curl --silent --show-error --fail \
             --retry 3 --retry-delay 5 \
             --max-time 60 \
             -H "User-Agent: $USER_AGENT" \
             -H "Accept: application/vnd.sdmx.data+csv;version=1.0.0" \
-            "$ABS_API/$CPI_DATAFLOW/$CPI_KEY?startPeriod=${START}&detail=dataonly" \
+            "$ABS_API/$CPI_DATAFLOW/$CPI_KEY?startPeriod=$CPI_START_RESOLVED&detail=dataonly" \
             -o data/cpi/cpi.csv
           echo "CPI CSV rows: $(wc -l < data/cpi/cpi.csv)"
 
-      # ── 4a. Fetch AWE — JSON ─────────────────────────────────────────────────
+      # ── 5a. Fetch AWE — JSON ─────────────────────────────────────────────────
       - name: Fetch AWE (JSON)
         run: |
-          START="${{ github.event.inputs.start_period && github.event.inputs.start_period | split('-') | first || env.AWE_START }}"
           curl --silent --show-error --fail \
             --retry 3 --retry-delay 5 \
             --max-time 60 \
             -H "User-Agent: $USER_AGENT" \
             -H "Accept: application/vnd.sdmx.data+json;version=1.0" \
-            "$ABS_API/$AWE_DATAFLOW/$AWE_KEY?startPeriod=${AWE_START}&detail=full" \
+            "$ABS_API/$AWE_DATAFLOW/$AWE_KEY?startPeriod=$AWE_START_RESOLVED&detail=full" \
             -o data/awe/awe.json
           echo "AWE JSON: $(wc -c < data/awe/awe.json) bytes"
 
-      # ── 4b. Fetch AWE — XML ──────────────────────────────────────────────────
+      # ── 5b. Fetch AWE — XML ──────────────────────────────────────────────────
       - name: Fetch AWE (XML)
         run: |
           curl --silent --show-error --fail \
@@ -116,11 +131,11 @@ jobs:
             --max-time 60 \
             -H "User-Agent: $USER_AGENT" \
             -H "Accept: application/vnd.sdmx.data+xml;version=2.1" \
-            "$ABS_API/$AWE_DATAFLOW/$AWE_KEY?startPeriod=${AWE_START}&detail=full" \
+            "$ABS_API/$AWE_DATAFLOW/$AWE_KEY?startPeriod=$AWE_START_RESOLVED&detail=full" \
             -o data/awe/awe.xml
           echo "AWE XML: $(wc -c < data/awe/awe.xml) bytes"
 
-      # ── 4c. Fetch AWE — CSV ──────────────────────────────────────────────────
+      # ── 5c. Fetch AWE — CSV ──────────────────────────────────────────────────
       - name: Fetch AWE (CSV)
         run: |
           curl --silent --show-error --fail \
@@ -128,11 +143,11 @@ jobs:
             --max-time 60 \
             -H "User-Agent: $USER_AGENT" \
             -H "Accept: application/vnd.sdmx.data+csv;version=1.0.0" \
-            "$ABS_API/$AWE_DATAFLOW/$AWE_KEY?startPeriod=${AWE_START}&detail=dataonly" \
+            "$ABS_API/$AWE_DATAFLOW/$AWE_KEY?startPeriod=$AWE_START_RESOLVED&detail=dataonly" \
             -o data/awe/awe.csv
           echo "AWE CSV rows: $(wc -l < data/awe/awe.csv)"
 
-      # ── 5. Validate files are non-empty ──────────────────────────────────────
+      # ── 6. Validate files are non-empty ──────────────────────────────────────
       - name: Validate downloads
         run: |
           for f in data/cpi/cpi.json data/cpi/cpi.xml data/cpi/cpi.csv \
@@ -144,7 +159,7 @@ jobs:
             echo "OK: $f ($(wc -c < $f) bytes)"
           done
 
-      # ── 6. Write a metadata sidecar with fetch timestamp and source URLs ─────
+      # ── 7. Write a metadata sidecar with fetch timestamp and source URLs ─────
       - name: Write fetch metadata
         run: |
           cat > data/fetch-metadata.json <<EOF
@@ -154,13 +169,13 @@ jobs:
               "cpi": {
                 "dataflow": "$CPI_DATAFLOW",
                 "key": "$CPI_KEY",
-                "start_period": "$CPI_START",
+                "start_period": "$CPI_START_RESOLVED",
                 "url": "$ABS_API/$CPI_DATAFLOW/$CPI_KEY"
               },
               "awe": {
                 "dataflow": "$AWE_DATAFLOW",
                 "key": "$AWE_KEY",
-                "start_period": "$AWE_START",
+                "start_period": "$AWE_START_RESOLVED",
                 "url": "$ABS_API/$AWE_DATAFLOW/$AWE_KEY"
               }
             },
@@ -177,7 +192,7 @@ jobs:
           }
           EOF
 
-      # ── 7. Commit and push updated data files ────────────────────────────────
+      # ── 8. Commit and push updated data files ────────────────────────────────
       - name: Commit snapshot to repository
         run: |
           git config user.name  "github-actions[bot]"
