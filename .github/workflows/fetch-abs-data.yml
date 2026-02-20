@@ -30,6 +30,19 @@ jobs:
       CPI_DATAFLOW: "ABS,CPI"
       CPI_KEY:      "1.10001.10.50.Q"
 
+      # ── CPIgroups ─────────────────────────────────────────────────────────────
+      # Quarterly CPI by expenditure group (All groups + 11 sub-groups),
+      # weighted average of 8 capital cities — used for the "chart of the century"
+      # Key structure: MEASURE.INDEX.TSEST.REGION.FREQ  (5 dimensions)
+      #   MEASURE = 1
+      #   INDEX   = 10001 (All groups) + 20001–20006, 115486, 115488, 115489,
+      #             115493, 126670 (expenditure groups)
+      #   TSEST   = 10    → Original (not seasonally adjusted)
+      #   REGION  = 50    → Weighted average of eight capital cities
+      #   FREQ    = Q     → Quarterly
+      CPIGROUPS_DATAFLOW: "ABS,CPI"
+      CPIGROUPS_KEY:      "1.10001+20001+20002+20003+20004+20005+20006+115486+115488+115489+115493+126670.10.50.Q"
+
       # ── AWE ──────────────────────────────────────────────────────────────────
       # Average Weekly Earnings, half-yearly (May / November reference periods)
       # Key structure: MEASURE.ESTIMATE_TYPE.SEX.SECTOR.INDUSTRY.TSEST.REGION.FREQ
@@ -55,6 +68,19 @@ jobs:
       LCI_DATAFLOW: "ABS,LCI"
       LCI_KEY:      "1.10001.P1.50.Q"
 
+      # ── LCIgroups ─────────────────────────────────────────────────────────────
+      # LCI by expenditure group (All groups + sub-groups), employee households —
+      # used for the "chart of the century" (LCI-based variant)
+      # Key structure: MEASURE.INDEX.HOUSEHOLD_TYPE.REGION.FREQ  (5 dimensions)
+      #   MEASURE        = 1
+      #   INDEX          = 10001 (All groups) + 20001–20006, 115486, 115488, 115489,
+      #                    115493, 126670, 131278, 131279 (expenditure groups)
+      #   HOUSEHOLD_TYPE = P1    → Employee households
+      #   REGION         = 50    → Weighted average of eight capital cities
+      #   FREQ           = Q     → Quarterly
+      LCIGROUPS_DATAFLOW: "ABS,LCI"
+      LCIGROUPS_KEY:      "1.10001+20001+20002+20003+20004+20005+20006+115486+115488+115489+115493+126670+131278+131279.P1.50.Q"
+
       # ── WPI ──────────────────────────────────────────────────────────────────
       # Wage Price Index, quarterly
       # Key structure: MEASURE.INDEX.SECTOR.INDUSTRY.TSEST.REGION.FREQ  (7 dimensions)
@@ -77,7 +103,7 @@ jobs:
       # ── 2. Create output directory structure ─────────────────────────────────
       - name: Create data directories
         run: |
-          mkdir -p data/cpi data/awe data/lci data/wpi
+          mkdir -p data/cpi data/cpigroups data/awe data/lci data/lcigroups data/wpi
 
       # ── 3a. Fetch CPI — JSON ─────────────────────────────────────────────────
       - name: Fetch CPI (JSON)
@@ -103,7 +129,31 @@ jobs:
             -o data/cpi/cpi.csv
           echo "CPI CSV rows: $(wc -l < data/cpi/cpi.csv)"
 
-      # ── 4a. Fetch AWE — JSON ─────────────────────────────────────────────────
+      # ── 4a. Fetch CPIgroups — JSON ────────────────────────────────────────────
+      - name: Fetch CPIgroups (JSON)
+        run: |
+          curl --silent --show-error --fail \
+            --retry 3 --retry-delay 5 \
+            --max-time 60 \
+            -H "User-Agent: $USER_AGENT" \
+            -H "Accept: application/vnd.sdmx.data+json;version=1.0" \
+            "$ABS_API/$CPIGROUPS_DATAFLOW/$CPIGROUPS_KEY?detail=full" \
+            -o data/cpigroups/cpigroups.json
+          echo "CPIgroups JSON: $(wc -c < data/cpigroups/cpigroups.json) bytes"
+
+      # ── 4b. Fetch CPIgroups — CSV ─────────────────────────────────────────────
+      - name: Fetch CPIgroups (CSV)
+        run: |
+          curl --silent --show-error --fail \
+            --retry 3 --retry-delay 5 \
+            --max-time 60 \
+            -H "User-Agent: $USER_AGENT" \
+            -H "Accept: application/vnd.sdmx.data+csv;version=1.0.0" \
+            "$ABS_API/$CPIGROUPS_DATAFLOW/$CPIGROUPS_KEY?detail=dataonly" \
+            -o data/cpigroups/cpigroups.csv
+          echo "CPIgroups CSV rows: $(wc -l < data/cpigroups/cpigroups.csv)"
+
+      # ── 5a. Fetch AWE — JSON ─────────────────────────────────────────────────
       - name: Fetch AWE (JSON)
         run: |
           curl --silent --show-error --fail \
@@ -115,7 +165,7 @@ jobs:
             -o data/awe/awe.json
           echo "AWE JSON: $(wc -c < data/awe/awe.json) bytes"
 
-      # ── 4b. Fetch AWE — CSV ──────────────────────────────────────────────────
+      # ── 5b. Fetch AWE — CSV ──────────────────────────────────────────────────
       - name: Fetch AWE (CSV)
         run: |
           curl --silent --show-error --fail \
@@ -127,7 +177,7 @@ jobs:
             -o data/awe/awe.csv
           echo "AWE CSV rows: $(wc -l < data/awe/awe.csv)"
 
-      # ── 5a. Fetch LCI — JSON ─────────────────────────────────────────────────
+      # ── 6a. Fetch LCI — JSON ─────────────────────────────────────────────────
       - name: Fetch LCI (JSON)
         run: |
           curl --silent --show-error --fail \
@@ -139,7 +189,7 @@ jobs:
             -o data/lci/lci.json
           echo "LCI JSON: $(wc -c < data/lci/lci.json) bytes"
 
-      # ── 5b. Fetch LCI — CSV ──────────────────────────────────────────────────
+      # ── 6b. Fetch LCI — CSV ──────────────────────────────────────────────────
       - name: Fetch LCI (CSV)
         run: |
           curl --silent --show-error --fail \
@@ -151,7 +201,31 @@ jobs:
             -o data/lci/lci.csv
           echo "LCI CSV rows: $(wc -l < data/lci/lci.csv)"
 
-      # ── 6a. Fetch WPI — JSON ─────────────────────────────────────────────────
+      # ── 7a. Fetch LCIgroups — JSON ────────────────────────────────────────────
+      - name: Fetch LCIgroups (JSON)
+        run: |
+          curl --silent --show-error --fail \
+            --retry 3 --retry-delay 5 \
+            --max-time 60 \
+            -H "User-Agent: $USER_AGENT" \
+            -H "Accept: application/vnd.sdmx.data+json;version=1.0" \
+            "$ABS_API/$LCIGROUPS_DATAFLOW/$LCIGROUPS_KEY?detail=full" \
+            -o data/lcigroups/lcigroups.json
+          echo "LCIgroups JSON: $(wc -c < data/lcigroups/lcigroups.json) bytes"
+
+      # ── 7b. Fetch LCIgroups — CSV ─────────────────────────────────────────────
+      - name: Fetch LCIgroups (CSV)
+        run: |
+          curl --silent --show-error --fail \
+            --retry 3 --retry-delay 5 \
+            --max-time 60 \
+            -H "User-Agent: $USER_AGENT" \
+            -H "Accept: application/vnd.sdmx.data+csv;version=1.0.0" \
+            "$ABS_API/$LCIGROUPS_DATAFLOW/$LCIGROUPS_KEY?detail=dataonly" \
+            -o data/lcigroups/lcigroups.csv
+          echo "LCIgroups CSV rows: $(wc -l < data/lcigroups/lcigroups.csv)"
+
+      # ── 8a. Fetch WPI — JSON ─────────────────────────────────────────────────
       - name: Fetch WPI (JSON)
         run: |
           curl --silent --show-error --fail \
@@ -163,7 +237,7 @@ jobs:
             -o data/wpi/wpi.json
           echo "WPI JSON: $(wc -c < data/wpi/wpi.json) bytes"
 
-      # ── 6b. Fetch WPI — CSV ──────────────────────────────────────────────────
+      # ── 8b. Fetch WPI — CSV ──────────────────────────────────────────────────
       - name: Fetch WPI (CSV)
         run: |
           curl --silent --show-error --fail \
@@ -175,12 +249,14 @@ jobs:
             -o data/wpi/wpi.csv
           echo "WPI CSV rows: $(wc -l < data/wpi/wpi.csv)"
 
-      # ── 7. Validate files are non-empty ──────────────────────────────────────
+      # ── 9. Validate files are non-empty ──────────────────────────────────────
       - name: Validate downloads
         run: |
           for f in data/cpi/cpi.json data/cpi/cpi.csv \
+                   data/cpigroups/cpigroups.json data/cpigroups/cpigroups.csv \
                    data/awe/awe.json data/awe/awe.csv \
                    data/lci/lci.json data/lci/lci.csv \
+                   data/lcigroups/lcigroups.json data/lcigroups/lcigroups.csv \
                    data/wpi/wpi.json data/wpi/wpi.csv; do
             if [ ! -s "$f" ]; then
               echo "ERROR: $f is empty or missing"
@@ -189,7 +265,7 @@ jobs:
             echo "OK: $f ($(wc -c < $f) bytes)"
           done
 
-      # ── 8. Write a metadata sidecar with fetch timestamp and source URLs ─────
+      # ── 10. Write a metadata sidecar with fetch timestamp and source URLs ─────
       - name: Write fetch metadata
         run: |
           cat > data/fetch-metadata.json <<EOF
@@ -201,6 +277,11 @@ jobs:
                 "key": "$CPI_KEY",
                 "url": "$ABS_API/$CPI_DATAFLOW/$CPI_KEY"
               },
+              "cpigroups": {
+                "dataflow": "$CPIGROUPS_DATAFLOW",
+                "key": "$CPIGROUPS_KEY",
+                "url": "$ABS_API/$CPIGROUPS_DATAFLOW/$CPIGROUPS_KEY"
+              },
               "awe": {
                 "dataflow": "$AWE_DATAFLOW",
                 "key": "$AWE_KEY",
@@ -211,6 +292,11 @@ jobs:
                 "key": "$LCI_KEY",
                 "url": "$ABS_API/$LCI_DATAFLOW/$LCI_KEY"
               },
+              "lcigroups": {
+                "dataflow": "$LCIGROUPS_DATAFLOW",
+                "key": "$LCIGROUPS_KEY",
+                "url": "$ABS_API/$LCIGROUPS_DATAFLOW/$LCIGROUPS_KEY"
+              },
               "wpi": {
                 "dataflow": "$WPI_DATAFLOW",
                 "key": "$WPI_KEY",
@@ -218,36 +304,46 @@ jobs:
               }
             },
             "notes": {
-              "cpi_measure":       "1 = Index Numbers",
-              "cpi_index":         "10001 = All groups CPI",
-              "cpi_tsest":         "10 = Original (not seasonally adjusted)",
-              "cpi_region":        "50 = Weighted average of eight capital cities",
-              "cpi_freq":          "Q = Quarterly",
-              "awe_measure":       "3 = Full-time adult average weekly ordinary time earnings",
-              "awe_estimate_type": "1 = Earnings",
-              "awe_sex":           "3 = Persons",
-              "awe_sector":        "7 = Private and Public",
-              "awe_industry":      "TOT = All Industries",
-              "awe_tsest":         "20 = Original (not seasonally adjusted)",
-              "awe_region":        "AUS = Australia",
-              "awe_freq":          "S = Half-yearly, semester",
-              "lci_measure":       "1 = Index Number",
-              "lci_index":         "10001 = All groups",
-              "lci_household":     "P1 = Employee households",
-              "lci_region":        "50 = Weighted average of eight capital cities",
-              "lci_freq":          "Q = Quarterly",
-              "wpi_measure":       "1 = Quarterly Index",
-              "wpi_index":         "THRPEB = Total hourly rates of pay excluding bonuses",
-              "wpi_sector":        "7 = Private and Public",
-              "wpi_industry":      "TOT = All Industries",
-              "wpi_tsest":         "20 = Seasonally Adjusted",
-              "wpi_region":        "AUS = Australia",
-              "wpi_freq":          "Q = Quarterly"
+              "cpi_measure":            "1 = Index Numbers",
+              "cpi_index":              "10001 = All groups CPI",
+              "cpi_tsest":              "10 = Original (not seasonally adjusted)",
+              "cpi_region":             "50 = Weighted average of eight capital cities",
+              "cpi_freq":               "Q = Quarterly",
+              "cpigroups_measure":      "1 = Index Numbers",
+              "cpigroups_index":        "10001 = All groups; 20001-20006, 115486, 115488, 115489, 115493, 126670 = expenditure groups",
+              "cpigroups_tsest":        "10 = Original (not seasonally adjusted)",
+              "cpigroups_region":       "50 = Weighted average of eight capital cities",
+              "cpigroups_freq":         "Q = Quarterly",
+              "awe_measure":            "3 = Full-time adult average weekly ordinary time earnings",
+              "awe_estimate_type":      "1 = Earnings",
+              "awe_sex":                "3 = Persons",
+              "awe_sector":             "7 = Private and Public",
+              "awe_industry":           "TOT = All Industries",
+              "awe_tsest":              "20 = Original (not seasonally adjusted)",
+              "awe_region":             "AUS = Australia",
+              "awe_freq":               "S = Half-yearly, semester",
+              "lci_measure":            "1 = Index Number",
+              "lci_index":              "10001 = All groups",
+              "lci_household":          "P1 = Employee households",
+              "lci_region":             "50 = Weighted average of eight capital cities",
+              "lci_freq":               "Q = Quarterly",
+              "lcigroups_measure":      "1 = Index Number",
+              "lcigroups_index":        "10001 = All groups; 20001-20006, 115486, 115488, 115489, 115493, 126670, 131278, 131279 = expenditure groups",
+              "lcigroups_household":    "P1 = Employee households",
+              "lcigroups_region":       "50 = Weighted average of eight capital cities",
+              "lcigroups_freq":         "Q = Quarterly",
+              "wpi_measure":            "1 = Quarterly Index",
+              "wpi_index":              "THRPEB = Total hourly rates of pay excluding bonuses",
+              "wpi_sector":             "7 = Private and Public",
+              "wpi_industry":           "TOT = All Industries",
+              "wpi_tsest":              "20 = Seasonally Adjusted",
+              "wpi_region":             "AUS = Australia",
+              "wpi_freq":               "Q = Quarterly"
             }
           }
           EOF
 
-      # ── 9. Commit and push updated data files ────────────────────────────────
+      # ── 11. Commit and push updated data files ───────────────────────────────
       - name: Commit snapshot to repository
         run: |
           git config user.name  "github-actions[bot]"
@@ -265,10 +361,13 @@ jobs:
             git push
           fi
 
-      # ── 10. Purge jsDelivr CDN cache so the page picks up fresh data ─────────
+      # ── 12. Purge jsDelivr CDN cache so the page picks up fresh data ─────────
       - name: Purge jsDelivr cache
         run: |
-          for f in data/cpi/cpi.csv data/awe/awe.csv data/lci/lci.csv data/wpi/wpi.csv; do
+          for f in data/cpi/cpi.csv data/cpigroups/cpigroups.csv \
+                   data/awe/awe.csv \
+                   data/lci/lci.csv data/lcigroups/lcigroups.csv \
+                   data/wpi/wpi.csv; do
             curl --silent --show-error --fail \
               "https://purge.jsdelivr.net/gh/x-byrne/AusAbund@main/${f}"
             echo "Purged: $f"
