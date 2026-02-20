@@ -51,11 +51,11 @@ jobs:
       #   SEX           = 3   → Persons
       #   SECTOR        = 7   → Private and Public
       #   INDUSTRY      = TOT → All Industries
-      #   TSEST         = 20  → Original (not seasonally adjusted)
+      #   TSEST         = 10  → Original (not seasonally adjusted)
       #   REGION        = AUS → Australia
       #   FREQ          = S   → Half-yearly, semester
       AWE_DATAFLOW: "ABS,AWE"
-      AWE_KEY:      "3.1.3.7.TOT.20.AUS.S"
+      AWE_KEY:      "3.1.3.7.TOT.10.AUS.S"
 
       # ── LCI ──────────────────────────────────────────────────────────────────
       # Selected Living Cost Indexes, employee households, quarterly
