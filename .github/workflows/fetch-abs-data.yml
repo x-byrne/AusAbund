@@ -1,9 +1,9 @@
 name: Fetch ABS Data Snapshot
 
 on:
-  # Run on the 2nd of every month at 02:00 UTC — shortly after typical ABS release dates
+  # Run on every business day at 02:00 UTC — shortly after typical ABS release dates
   schedule:
-    - cron: "0 2 2 * *"
+    - cron: "0 2 * * 1-5"
 
   # Allow manual runs from the Actions tab (useful for initial setup / backfill)
   workflow_dispatch:
