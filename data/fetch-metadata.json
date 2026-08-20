@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-08-19T02:51:28Z",
+  "fetched_at": "2026-08-20T02:07:56Z",
   "sources": {
     "cpi": {
       "dataflow": "ABS,CPI",
@@ -35,6 +35,11 @@
       "dataflow": "ABS,WPI",
       "key": "1.THRPEB.7.TOT.20.AUS.Q",
       "url": "https://data.api.abs.gov.au/rest/data/ABS,WPI/1.THRPEB.7.TOT.20.AUS.Q"
+    },
+    "res_dwell_st": {
+      "dataflow": "ABS,RES_DWELL_ST",
+      "key": "1+4+5.AUS.Q",
+      "url": "https://data.api.abs.gov.au/rest/data/ABS,RES_DWELL_ST/1+4+5.AUS.Q"
     }
   },
   "notes": {
@@ -77,6 +82,9 @@
     "wpi_industry":         "TOT = All Industries",
     "wpi_tsest":            "20 = Seasonally Adjusted",
     "wpi_region":           "AUS = Australia",
-    "wpi_freq":             "Q = Quarterly"
+    "wpi_freq":             "Q = Quarterly",
+    "res_dwell_st_measure":      "1+4+5 = Mean price",
+    "res_dwell_st_house_type":   "AUS = Australia",
+    "res_dwell_st_freq":         "Q = Quarterly"
   }
 }
