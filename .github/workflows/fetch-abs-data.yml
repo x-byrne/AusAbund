@@ -121,6 +121,15 @@ jobs:
       WPI_DATAFLOW: "ABS,WPI"
       WPI_KEY:      "1.THRPEB.7.TOT.20.AUS.Q"
 
+      # ── RES_DWELL_ST ──────────────────────────────────────────────────────────
+      # Australian mean house price, quarterly
+      # Key: MEASURE+HOUSE_TYPE.REGION.FREQ
+      #   MEASURE+HOUSE_TYPE = 1+4+5 → Mean price, all houses
+      #   REGION             = AUS   → Australia
+      #   FREQ               = Q     → Quarterly
+      RES_DWELL_ST_DATAFLOW: "ABS,RES_DWELL_ST"
+      RES_DWELL_ST_KEY:      "1+4+5.AUS.Q"
+
     steps:
 
       # ── 1. Checkout repo so we can commit the snapshots back ─────────────────
@@ -130,7 +139,7 @@ jobs:
       # ── 2. Create output directory structure ─────────────────────────────────
       - name: Create data directories
         run: |
-          mkdir -p data/cpi data/cpigroups data/cpihousing data/awe data/lci data/lcigroups data/wpi
+          mkdir -p data/cpi data/cpigroups data/cpihousing data/awe data/lci data/lcigroups data/wpi data/res_dwell_st
 
       # ── 3a. Fetch CPI — JSON ─────────────────────────────────────────────────
       - name: Fetch CPI (JSON)
@@ -300,7 +309,31 @@ jobs:
             -o data/wpi/wpi.csv
           echo "WPI CSV rows: $(wc -l < data/wpi/wpi.csv)"
 
-      # ── 10. Validate files are non-empty ─────────────────────────────────────
+      # ── 10a. Fetch RES_DWELL_ST — JSON ───────────────────────────────────────
+      - name: Fetch RES_DWELL_ST (JSON)
+        run: |
+          curl --silent --show-error --fail \
+            --retry 3 --retry-delay 5 \
+            --max-time 60 \
+            -H "User-Agent: $USER_AGENT" \
+            -H "Accept: application/vnd.sdmx.data+json;version=1.0" \
+            "$ABS_API/$RES_DWELL_ST_DATAFLOW/$RES_DWELL_ST_KEY?detail=full" \
+            -o data/res_dwell_st/res_dwell_st.json
+          echo "RES_DWELL_ST JSON: $(wc -c < data/res_dwell_st/res_dwell_st.json) bytes"
+
+      # ── 10b. Fetch RES_DWELL_ST — CSV ────────────────────────────────────────
+      - name: Fetch RES_DWELL_ST (CSV)
+        run: |
+          curl --silent --show-error --fail \
+            --retry 3 --retry-delay 5 \
+            --max-time 60 \
+            -H "User-Agent: $USER_AGENT" \
+            -H "Accept: application/vnd.sdmx.data+csv;version=1.0.0" \
+            "$ABS_API/$RES_DWELL_ST_DATAFLOW/$RES_DWELL_ST_KEY?detail=dataonly" \
+            -o data/res_dwell_st/res_dwell_st.csv
+          echo "RES_DWELL_ST CSV rows: $(wc -l < data/res_dwell_st/res_dwell_st.csv)"
+
+      # ── 11. Validate files are non-empty ─────────────────────────────────────
       - name: Validate downloads
         run: |
           for f in data/cpi/cpi.json data/cpi/cpi.csv \
@@ -309,7 +342,8 @@ jobs:
                    data/awe/awe.json data/awe/awe.csv \
                    data/lci/lci.json data/lci/lci.csv \
                    data/lcigroups/lcigroups.json data/lcigroups/lcigroups.csv \
-                   data/wpi/wpi.json data/wpi/wpi.csv; do
+                   data/wpi/wpi.json data/wpi/wpi.csv \
+                   data/res_dwell_st/res_dwell_st.json data/res_dwell_st/res_dwell_st.csv; do
             if [ ! -s "$f" ]; then
               echo "ERROR: $f is empty or missing"
               exit 1
@@ -358,6 +392,11 @@ jobs:
                 "dataflow": "$WPI_DATAFLOW",
                 "key": "$WPI_KEY",
                 "url": "$ABS_API/$WPI_DATAFLOW/$WPI_KEY"
+              },
+              "res_dwell_st": {
+                "dataflow": "$RES_DWELL_ST_DATAFLOW",
+                "key": "$RES_DWELL_ST_KEY",
+                "url": "$ABS_API/$RES_DWELL_ST_DATAFLOW/$RES_DWELL_ST_KEY"
               }
             },
             "notes": {
@@ -400,7 +439,10 @@ jobs:
               "wpi_industry":         "TOT = All Industries",
               "wpi_tsest":            "20 = Seasonally Adjusted",
               "wpi_region":           "AUS = Australia",
-              "wpi_freq":             "Q = Quarterly"
+              "wpi_freq":             "Q = Quarterly",
+              "res_dwell_st_measure":      "1+4+5 = Mean price",
+              "res_dwell_st_house_type":   "AUS = Australia",
+              "res_dwell_st_freq":         "Q = Quarterly"
             }
           }
           EOF
@@ -430,7 +472,8 @@ jobs:
                    data/cpihousing/cpihousing.csv \
                    data/awe/awe.csv \
                    data/lci/lci.csv data/lcigroups/lcigroups.csv \
-                   data/wpi/wpi.csv; do
+                   data/wpi/wpi.csv \
+                   data/res_dwell_st/res_dwell_st.csv; do
             curl --silent --show-error --fail \
               "https://purge.jsdelivr.net/gh/x-byrne/AusAbund@main/${f}"
             echo "Purged: $f"
